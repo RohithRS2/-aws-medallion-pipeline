@@ -21,7 +21,7 @@ flowchart LR
     C --> G[Amazon SNS<br/>Notifications]
     C --> H[CloudWatch<br/>Monitoring]
     E --> H
-    ```
+```
 
 Data Flow
 
