@@ -1,0 +1,9 @@
+transaction_id,customer_id,product_category,quantity,unit_price,transaction_date,transaction_amount
+TXN001,CUST001,Electronics,2,500.00,2026-09-01,1000.00
+TXN002,CUST002,Clothing,3,40.00,2026-09-01,120.00
+TXN003,CUST003,Groceries,5,25.00,2026-09-02,125.00
+TXN004,CUST004,Electronics,1,750.00,2026-09-02,750.00
+TXN005,CUST005,Furniture,2,300.00,2026-09-03,600.00
+TXN006,CUST006,Clothing,4,35.00,2026-09-03,140.00
+TXN007,CUST007,Groceries,6,15.00,2026-09-04,90.00
+TXN008,CUST008,Furniture,1,450.00,2026-09-04,450.00
