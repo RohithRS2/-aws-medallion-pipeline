@@ -6,62 +6,61 @@ This project demonstrates an AWS-based Medallion Architecture for processing tra
 
 **Bronze → Silver → Gold**
 
-The pipeline uses Amazon S3 and AWS Lambda to automatically process and transform data as it moves between the layers.
+The pipeline uses Amazon S3 and AWS Lambda to automatically process and transform transaction data as it moves between the layers.
 
 ## Architecture
 
-```text
-Raw CSV
-   |
-   v
-S3 Bronze Layer
-   |
-   | S3 Event Trigger
-   v
-AWS Lambda
-Bronze → Silver
-   |
-   v
-S3 Silver Layer
-   |
-   | S3 Event Trigger
-   v
-AWS Lambda
-Silver → Gold
-   |
-   v
-S3 Gold Layer
+```mermaid
+flowchart LR
+    A[Raw Transaction CSV] --> B[S3 Bronze Layer]
+    B -->|Object Created Event| C[AWS Lambda<br/>Bronze to Silver]
+    C --> D[S3 Silver Layer]
+    D -->|Object Created Event| E[AWS Lambda<br/>Silver to Gold]
+    E --> F[S3 Gold Layer]
 
+    C --> G[Amazon SNS<br/>Notifications]
+    C --> H[CloudWatch<br/>Monitoring]
+    E --> H
+Data Flow
+
+1. A raw transaction CSV file is uploaded to the S3 Bronze layer.
+2. The S3 Object Created event triggers the Bronze-to-Silver Lambda.
+3. The Lambda reads and cleans the raw transaction data.
+4. Cleaned data is written to the S3 Silver layer.
+5. Creation of the Silver CSV triggers the Silver-to-Gold Lambda.
+6. The Lambda aggregates the cleaned data.
+7. The final analytics-ready dataset is written to the S3 Gold layer.
+8. CloudWatch is used for monitoring and Lambda logs.
+9. Amazon SNS is used for notification capabilities.
 
 Bronze Layer
 
-The Bronze layer stores raw transaction data uploaded to Amazon S3.
-
-Example:
-
+The Bronze layer stores the raw transaction data received from the source.
+S3 prefix:
 bronze/
+The Bronze layer preserves the source data before transformation.
 
 Silver Layer
 
-The Bronze-to-Silver Lambda processes the raw data and creates a cleaned dataset.
+The Bronze-to-Silver Lambda processes the raw transaction data and creates a cleaned dataset.
 
-Processing includes:
+Processing
 
 * Data cleaning
 * Duplicate removal
 * Invalid/outlier record removal
 * Transaction data transformation
-* Creation of a clean CSV dataset
+* CSV processing
+* Creation of a clean dataset
 
 Output:
-
 silver/clean_transactions.csv
 
 Gold Layer
 
-The Silver-to-Gold Lambda creates an analytics-ready aggregated dataset.
+The Silver-to-Gold Lambda processes the cleaned Silver data and creates an analytics-ready aggregated dataset.
 
-Processing includes:
+Processing
 
 * Grouping transactions by product category
 * Calculating transaction counts
@@ -69,7 +68,6 @@ Processing includes:
 * Creating the final Gold dataset
 
 Output:
-
 gold/gold_transactions.csv
 
 AWS Services Used
@@ -82,13 +80,11 @@ AWS Services Used
 
 Lambda Functions
 
-Bronze to Silver
+1. Bronze to Silver
 
 File:
-
 lambda/bronze-to-silver/lambda_function.py
-
-Triggered when a CSV file is uploaded to the Bronze S3 layer.
+The function is triggered when a CSV file is uploaded to the Bronze S3 prefix.
 
 Responsibilities:
 
@@ -96,15 +92,12 @@ Responsibilities:
 * Clean transaction data
 * Remove duplicate records
 * Remove invalid/outlier records
-* Write the cleaned data to Silver
+* Write the cleaned dataset to the Silver layer
 
-Silver to Gold
-
+2. Silver to Gold
 File:
-
 lambda/silver-to-gold/lambda_function.py
-
-Triggered when a CSV file is created in the Silver S3 layer.
+The function is triggered when a CSV file is created in the Silver S3 prefix.
 
 Responsibilities:
 
@@ -114,52 +107,73 @@ Responsibilities:
 * Calculate total transaction amounts
 * Write the Gold dataset to S3
 
-Event-Driven Architecture
+S3 Event-Driven Processing
 
-The pipeline automatically processes files using S3 object-created events.
-
-CSV Upload
-    |
-    v
+The pipeline uses S3 Object Created events to automatically trigger the Lambda functions.
+Raw CSV
+   |
+   v
 S3 Bronze
-    |
-    v
+   |
+   v
 Bronze-to-Silver Lambda
-    |
-    v
+   |
+   v
 S3 Silver
-    |
-    v
+   |
+   v
 Silver-to-Gold Lambda
-    |
-    v
+   |
+   v
 S3 Gold
 
 
 IAM
 
-IAM roles provide Lambda with the required permissions to read and write objects in Amazon S3.
+AWS IAM roles are used to provide the Lambda functions with the required permissions.
 
-AWS credentials are not stored in this repository.
+The Lambda functions require permissions to:
+
+* Read objects from S3
+* Write transformed objects to S3
+* Publish notifications where required
+
+AWS access keys and secrets are not stored in this repository.
 
 Monitoring and Notifications
 
-AWS CloudWatch can be used to monitor Lambda execution, logs, duration, memory usage, and failures.
+Amazon CloudWatch can be used to monitor:
+
+* Lambda execution
+* Lambda logs
+* Execution duration
+* Memory usage
+* Errors and failures
 
 Amazon SNS is used for notification capabilities.
-
-Project Structure
-
 aws-medallion-pipeline/
 │
 ├── lambda/
+│   │
 │   ├── bronze-to-silver/
 │   │   └── lambda_function.py
 │   │
 │   └── silver-to-gold/
 │       └── lambda_function.py
 │
+├── sample-data/
+│   └── sample_transactions.csv
+│
+├── .gitignore
+│
 └── README.md
+
+Sample Data
+
+A small sample transaction dataset is included for demonstration purposes.
+File:
+sample-data/sample_transactions.csv
+The large transaction datasets used during AWS testing are stored in Amazon S3 and are not uploaded to GitHub.
 
 Technologies
 
@@ -181,9 +195,19 @@ This project demonstrates practical experience with:
 * AWS S3 data lake architecture
 * Medallion Architecture
 * Serverless data processing
-* Event-driven processing
+* Event-driven architecture
 * Python-based ETL
 * Data cleaning and transformation
 * Data aggregation
+* S3 event triggers
 * IAM permissions
-* AWS monitoring and notifications
+* CloudWatch monitoring
+* SNS notifications
+
+Project Outcome
+
+The completed pipeline automatically transforms transaction data through:
+
+Bronze → Silver → Gold
+
+This demonstrates a practical serverless data engineering workflow using AWS services.
